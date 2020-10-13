@@ -1,0 +1,45 @@
+<style>
+  .add-border {
+    border: 4px solid red !important;
+  }
+</style>
+
+<script>
+  document.addEventListener("mouseover", (e) => {
+    e.target.classList.add("add-border");
+
+    e.stopPropagation();
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    e.target.classList.remove("add-border");
+  });
+
+  function getPathTo(element) {
+    if (element.id !== "") return 'id("' + element.id + '")';
+    if (element === document.body) return element.tagName;
+
+    var ix = 0;
+    var siblings = element.parentNode.childNodes;
+    for (var i = 0; i < siblings.length; i++) {
+      var sibling = siblings[i];
+      if (sibling === element)
+        return (
+          getPathTo(element.parentNode) +
+          "/" +
+          element.tagName +
+          "[" +
+          (ix + 1) +
+          "]"
+        );
+      if (sibling.nodeType === 1 && sibling.tagName === element.tagName) ix++;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    e.preventDefault();
+    const xPath = getPathTo(e.target);
+    console.log(xPath);
+    window.top.postMessage(xPath, "*");
+  });
+</script>
