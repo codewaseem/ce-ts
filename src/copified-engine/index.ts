@@ -1,7 +1,6 @@
 import fse from "fs-extra";
 import { join } from "path";
 import puppeteer from "puppeteer-extra";
-import config from "../config";
 
 const injectHTML = fse
   .readFileSync(join(__dirname, "../assets", "inject.html"))
@@ -19,7 +18,7 @@ export default class CopifiedEngine {
     await page.goto(url, { waitUntil: "networkidle0", timeout: 0 });
     await page.evaluate(
       ({ injectHTML }) => {
-        document.body.insertAdjacentHTML("beforeend", injectHTML);
+        document.head.insertAdjacentHTML("beforeend", injectHTML);
       },
       { injectHTML }
     );
@@ -29,8 +28,11 @@ export default class CopifiedEngine {
 
     const date = Date.now();
 
-    await fse.outputFile(join(process.cwd(), `public`, `${date}.html`), html);
+    await fse.outputFile(
+      join(process.cwd(), `public`, `prerendered`, `${date}.html`),
+      html
+    );
 
-    return `http://www.${config.HOSTNAME}:${config.PORT}/${date}.html`;
+    return `/prerendered/${date}.html`;
   }
 }

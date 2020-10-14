@@ -30,6 +30,10 @@ function buildExpressApp() {
   app.use(cors());
 
   app.use(express.static(join(process.cwd(), "public")));
+  app.use(
+    "/prerendere",
+    express.static(join(process.cwd(), "public", "generated"))
+  );
 
   return app;
 }

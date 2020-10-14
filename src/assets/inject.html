@@ -5,6 +5,16 @@
 </style>
 
 <script>
+  function getElementByXpath(path) {
+    return document.evaluate(
+      path,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
+  }
+
   document.addEventListener("mouseover", (e) => {
     e.target.classList.add("add-border");
 
