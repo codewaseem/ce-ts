@@ -28,6 +28,9 @@ main();
 
 function buildExpressApp() {
   const app = express();
+
+  app.set("port", config.PORT);
+
   app.use(cors());
 
   app.use(express.static(join(process.cwd(), "public")));
@@ -72,7 +75,7 @@ async function setupGraphQLServer(app: express.Express) {
 }
 
 async function startServer(app: express.Express) {
-  app.listen(config.PORT, config.HOSTNAME, () => {
-    console.log(`Server started at ${config.PORT}`);
+  app.listen(app.get("port"), () => {
+    console.log(`Server started at ${app.get("port")}`);
   });
 }
