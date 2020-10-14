@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "license": "ISC",
   "scripts": {
-    "preinstall": "yarn del dist/",
     "copy-assets": "yarn cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "postinstall": "yarn tsc && yarn copy-assets",
     "start": "node dist/index.js",
