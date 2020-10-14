@@ -7,9 +7,9 @@
   "scripts": {
     "prebuild": "yarn del dist/",
     "postbuild": "yarn cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
-    "start": "yarn build && node dist/index.js",
+    "postinstall": "yarn tsc",
+    "start": "node dist/index.js",
     "run-ts-script": "tsnd --respawn ",
-    "build": "yarn tsc",
     "dev": "yarn run-ts-script src/index.ts",
     "test": "yarn jest",
     "test:watch": "yarn jest --watch",
