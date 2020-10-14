@@ -67,6 +67,7 @@ async function setupGraphQLServer(app: express.Express) {
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
+    playground: true,
   });
 
   apolloServer.applyMiddleware({
