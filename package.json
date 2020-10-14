@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "license": "ISC",
   "scripts": {
-    "prebuild": "yarn del dist/",
-    "postbuild": "yarn cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
-    "postinstall": "yarn tsc",
+    "preinstall": "yarn del dist/",
+    "copy-assets": "yarn cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
+    "postinstall": "yarn tsc && yarn copy-assets",
     "start": "node dist/index.js",
     "run-ts-script": "tsnd --respawn ",
     "dev": "yarn run-ts-script src/index.ts",
