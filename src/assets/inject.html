@@ -15,15 +15,14 @@
     ).singleNodeValue;
   }
 
-  document.addEventListener("mouseover", (e) => {
+  const addBorder = (e) => {
     e.target.classList.add("add-border");
+    // e.stopPropagation();
+  };
 
-    e.stopPropagation();
-  });
-
-  document.addEventListener("mouseout", (e) => {
+  const removeBorder = (e) => {
     e.target.classList.remove("add-border");
-  });
+  };
 
   function getPathTo(element) {
     if (element.id !== "") return 'id("' + element.id + '")';
@@ -46,10 +45,48 @@
     }
   }
 
-  document.addEventListener("click", (e) => {
+  function clickHandler(e) {
     e.preventDefault();
     const xPath = getPathTo(e.target);
     console.log(xPath);
     window.top.postMessage(xPath, "*");
+  }
+
+  function addClickHandler() {
+    document.addEventListener("mouseover", addBorder);
+    document.addEventListener("mouseout", removeBorder);
+    document.addEventListener("click", clickHandler);
+  }
+
+  function removeClickHandler() {
+    document.removeEventListener("mouseover", addBorder);
+    document.removeEventListener("mouseout", removeBorder);
+    document.removeEventListener("click", clickHandler);
+  }
+
+  addClickHandler();
+
+  window.addEventListener("message", (ev) => {
+    window.top.window.console.log(ev.action, ev.xPath, ev.execute);
+
+    if (ev.data.action == "addClickHandler") {
+      removeClickHandler();
+      addClickHandler();
+    }
+
+    if (ev.data.action == "removeClickHandler") {
+      removeClickHandler();
+    }
+
+    if (ev.data.action == "fetchElementHTMLByXpath") {
+      let str = getElementByXpath(ev.data.xPath).outerHTML;
+      window.top.window.console.log(str);
+      window.top.postMessage(str, "*");
+    }
+
+    if (ev.data.action == "runAction") {
+      window.top.window.console.log(ev.data.execute);
+      eval(ev.data.execute);
+    }
   });
 </script>
