@@ -103,6 +103,9 @@ export default async function clonePage({
   }) as JSDOM;
 
   htmlDoc.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
+  htmlDoc.window.document
+    .querySelectorAll("iframe[src^=cid]")
+    .forEach((frame) => frame.remove());
 
   return htmlDoc;
 }
