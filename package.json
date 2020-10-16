@@ -7,9 +7,10 @@
   "scripts": {
     "copy-assets": "yarn cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --parents",
     "del-dist": "yarn del dist",
-    "postinstall": "yarn del-dist && yarn tsc && yarn copy-assets",
+    "compile": "yarn del-dist && yarn tsc && yarn copy-assets",
+    "postinstall": "yarn compile",
     "start": "node dist/index.js",
-    "run-ts-script": "tsnd --respawn ",
+    "run-ts-script": "tsnd --files --respawn ",
     "dev": "yarn run-ts-script src/index.ts",
     "test": "yarn jest",
     "test:watch": "yarn jest --watch",

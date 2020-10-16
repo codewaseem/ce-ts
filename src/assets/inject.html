@@ -5,6 +5,51 @@
 </style>
 
 <script>
+  const crossFrameActions = {
+    activateClickHandler: "activateClickHandler",
+    removeClickHandler: "removeClickHandler",
+    getElementByXPath: "getElementByXPath",
+    runCode: "runCode",
+  };
+
+  function pollFragment() {
+    let lastHash = "";
+    setInterval(() => {
+      if (lastHash != window.location.hash) {
+        lastHash = window.location.hash;
+        const action = lastHash.split("::")[0].replace("#", "");
+        const [_, ...params] = lastHash.split("::");
+        switch (action) {
+          case crossFrameActions.activateClickHandler:
+            {
+              removeClickHandler();
+              addClickHandler();
+            }
+            break;
+          case crossFrameActions.removeClickHandler:
+            {
+              removeClickHandler();
+            }
+            break;
+          case crossFrameActions.getElementByXPath:
+            {
+              let str = getElementByXpath(decodeURIComponent(...params))
+                .outerHTML;
+              window.top.window.console.log(str);
+              window.top.postMessage(str, "*");
+            }
+            break;
+          case crossFrameActions.runCode: {
+            window.top.window.console.log(ev.data.execute);
+            eval(ev.data.execute);
+          }
+        }
+      }
+    }, 500);
+  }
+
+  pollFragment();
+
   function getElementByXpath(path) {
     return document.evaluate(
       path,
@@ -48,8 +93,9 @@
   function clickHandler(e) {
     e.preventDefault();
     const xPath = getPathTo(e.target);
+    const src = e.target.outerHTML;
     console.log(xPath);
-    window.top.postMessage(xPath, "*");
+    window.top.postMessage({ xPath, src }, "*");
   }
 
   function addClickHandler() {
@@ -65,28 +111,4 @@
   }
 
   addClickHandler();
-
-  window.addEventListener("message", (ev) => {
-    window.top.window.console.log(ev.action, ev.xPath, ev.execute);
-
-    if (ev.data.action == "addClickHandler") {
-      removeClickHandler();
-      addClickHandler();
-    }
-
-    if (ev.data.action == "removeClickHandler") {
-      removeClickHandler();
-    }
-
-    if (ev.data.action == "fetchElementHTMLByXpath") {
-      let str = getElementByXpath(ev.data.xPath).outerHTML;
-      window.top.window.console.log(str);
-      window.top.postMessage(str, "*");
-    }
-
-    if (ev.data.action == "runAction") {
-      window.top.window.console.log(ev.data.execute);
-      eval(ev.data.execute);
-    }
-  });
 </script>
