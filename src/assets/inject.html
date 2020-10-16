@@ -33,10 +33,10 @@
             break;
           case crossFrameActions.getElementByXPath:
             {
-              let str = getElementByXpath(decodeURIComponent(...params))
-                .outerHTML;
-              window.top.window.console.log(str);
-              window.top.postMessage(str, "*");
+              let ele = getElementByXpath(decodeURIComponent(...params));
+              ele.setAttribute("style", "");
+              window.top.window.console.log(ele.outerHTML);
+              window.top.postMessage(ele.outerHTML, "*");
             }
             break;
           case crossFrameActions.runCode: {
@@ -93,6 +93,7 @@
   function clickHandler(e) {
     e.preventDefault();
     const xPath = getPathTo(e.target);
+    e.target.setAttribute("style", "");
     const outerHTML = e.target.outerHTML;
     window.top.postMessage({ xPath, outerHTML }, "*");
   }
