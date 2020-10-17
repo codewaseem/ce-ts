@@ -33,10 +33,17 @@
             break;
           case crossFrameActions.getElementByXPath:
             {
-              let ele = getElementByXpath(decodeURIComponent(...params));
+              let xPath = decodeURIComponent(...params);
+              let ele = getElementByXpath(xPath);
               ele.setAttribute("style", "");
-              window.top.window.console.log(ele.outerHTML);
-              window.top.postMessage(ele.outerHTML, "*");
+              window.top.postMessage(
+                {
+                  result: crossFrameActions.getElementByXPath,
+                  outerHTML: ele.outerHTML,
+                  xPath,
+                },
+                "*"
+              );
             }
             break;
           case crossFrameActions.runCode: {
