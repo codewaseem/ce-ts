@@ -52,10 +52,10 @@ export default async function clonePage({
   });
 
   const page = await browser.newPage();
+  page.setDefaultTimeout(1000 * 60);
 
   await interceptRequest(page);
   await page.goto(url, { waitUntil: "networkidle0" });
-
   await page.waitForTimeout(waitFor);
 
   if (pauseMedia) {
@@ -97,6 +97,8 @@ export default async function clonePage({
   const { data } = (await cdp.send("Page.captureSnapshot", {
     format: "mhtml",
   })) as { data: string };
+
+  page.close();
 
   const htmlDoc = mhtml2html.convert(data, {
     parseDOM: (html: string) => new JSDOM(html),

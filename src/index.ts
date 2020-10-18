@@ -23,7 +23,6 @@ const main = async () => {
     typeDefs,
     resolvers,
     playground: true,
-    introspection: true,
   });
 
   apolloServer.applyMiddleware({
