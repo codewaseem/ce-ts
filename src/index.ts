@@ -7,16 +7,6 @@ import config from "./config";
 import { resolvers, typeDefs } from "./graphql";
 
 const main = async () => {
-  const app = buildExpressApp();
-
-  await setupGraphQLServer(app);
-
-  await startServer(app);
-};
-
-main();
-
-function buildExpressApp() {
   const app = express();
 
   app.set("port", config.PORT);
@@ -24,15 +14,7 @@ function buildExpressApp() {
   app.use(cors());
 
   app.use(express.static(join(process.cwd(), "public")));
-  app.use(
-    "/prerendere",
-    express.static(join(process.cwd(), "public", "generated"))
-  );
 
-  return app;
-}
-
-async function setupGraphQLServer(app: express.Express) {
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
@@ -41,11 +23,14 @@ async function setupGraphQLServer(app: express.Express) {
 
   apolloServer.applyMiddleware({
     app,
+    cors: {
+      origin: "*",
+    },
   });
-}
 
-async function startServer(app: express.Express) {
   app.listen(app.get("port"), () => {
     console.log(`Server started at ${app.get("port")}`);
   });
-}
+};
+
+main();
