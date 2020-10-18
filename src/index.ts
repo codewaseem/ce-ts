@@ -11,6 +11,7 @@ const main = async () => {
 
   app.set("port", config.PORT);
 
+  app.options("*", cors());
   app.use(
     cors({
       credentials: true,
