@@ -35,11 +35,11 @@
             {
               let xPath = decodeURIComponent(...params);
               let ele = getElementByXpath(xPath);
-              ele.setAttribute("style", "");
+              ele && ele.setAttribute("style", "");
               window.top.postMessage(
                 {
                   result: crossFrameActions.getElementByXPath,
-                  outerHTML: ele.outerHTML,
+                  outerHTML: ele ? ele.outerHTML : "",
                   xPath,
                 },
                 "*"
