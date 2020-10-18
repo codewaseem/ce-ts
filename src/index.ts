@@ -11,7 +11,11 @@ const main = async () => {
 
   app.set("port", config.PORT);
 
-  app.use(cors());
+  app.use(
+    cors({
+      credentials: true,
+    })
+  );
 
   app.use(express.static(join(process.cwd(), "public")));
 
@@ -19,13 +23,12 @@ const main = async () => {
     typeDefs,
     resolvers,
     playground: true,
+    introspection: true,
   });
 
   apolloServer.applyMiddleware({
     app,
-    cors: {
-      origin: "*",
-    },
+    cors: false,
   });
 
   app.listen(app.get("port"), () => {
