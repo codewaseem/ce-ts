@@ -82,8 +82,8 @@ export default async function clonePage({
             if (sBy > sHeight) return resolve();
             window.scrollBy(0, sBy);
             sBy += 200;
-            setTimeout(cb, 1000);
-          }, 1000);
+            setTimeout(cb, 200);
+          }, 200);
         });
       }
 
