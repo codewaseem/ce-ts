@@ -52,7 +52,7 @@ export default async function clonePage({
   });
 
   const page = await browser.newPage();
-  page.setDefaultTimeout(1000 * 60);
+  page.setDefaultTimeout(1000 * 28);
 
   await interceptRequest(page);
   await page.goto(url, { waitUntil: "networkidle0" });
