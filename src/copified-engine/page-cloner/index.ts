@@ -4,6 +4,7 @@ import mhtml2html from "mhtml2html";
 import { join } from "path";
 import puppeteer from "puppeteer-extra";
 import { Page } from "puppeteer-extra/dist/puppeteer";
+import logger from "../../utils/logger";
 import blockedSites from "./blocked";
 
 const injectHTML = fse
@@ -29,27 +30,20 @@ async function interceptRequest(page: Page) {
 
 export default async function clonePage({
   url,
-  browserWSEndpoint,
   waitFor = 1,
   scrollToBottom = true,
   pauseMedia = true,
 }: {
   url: string;
-  browserWSEndpoint: string;
   waitFor?: number;
   scrollToBottom?: boolean;
   pauseMedia?: boolean;
 }): Promise<JSDOM> {
-  const width = 1024;
-  const height = 768;
-
   const browser = await puppeteer.connect({
-    browserWSEndpoint,
-    defaultViewport: {
-      width,
-      height,
-    },
+    browserWSEndpoint: `ws://chrome:3000`,
   });
+
+  logger.info("CONNECTED");
 
   const page = await browser.newPage();
   page.setDefaultTimeout(28 * 1000);

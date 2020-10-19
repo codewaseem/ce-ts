@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  chrome:
+    image: "browserless/chrome"
+    ports:
+      - 3000:3000
+  app:
+    build: .
+    ports:
+      - 80:1338

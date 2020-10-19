@@ -1,5 +1,4 @@
 import logger from "../utils/logger";
-import { getBrowserWSEndpoint } from "./browser-setup";
 import clonePage from "./page-cloner";
 import {
   getPageCDNPath,
@@ -10,8 +9,6 @@ import {
 export default async function getCloneFunction(): Promise<
   (userId: string, url: string) => Promise<string>
 > {
-  const browserWSEndpoint = await getBrowserWSEndpoint();
-
   return async (userId: string, url: string, forceReload = false) => {
     if (!forceReload && (await isUserPageExists(userId, url))) {
       logger.info("Returning from cache");
@@ -22,7 +19,6 @@ export default async function getCloneFunction(): Promise<
       logger.info(`Cloning page ${url}`);
       const htmlDoc = await clonePage({
         url,
-        browserWSEndpoint,
       });
 
       logger.info("Page cloned, saving page");
