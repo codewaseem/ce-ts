@@ -71,6 +71,8 @@
     "pg": "^8.3.3",
     "puppeteer": "^5.3.1",
     "puppeteer-extra": "^3.1.15",
+    "puppeteer-extra-plugin-adblocker": "^2.11.6",
+    "puppeteer-extra-plugin-stealth": "^2.6.2",
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.0.0",
     "typeorm": "^0.2.26",

@@ -3,9 +3,15 @@ import { JSDOM } from "jsdom";
 import mhtml2html from "mhtml2html";
 import { join } from "path";
 import puppeteer from "puppeteer-extra";
+import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Page } from "puppeteer-extra/dist/puppeteer";
 import logger from "../../utils/logger";
 import blockedSites from "./blocked";
+
+logger.info("applying puppeteer-extra plugins");
+puppeteer.use(StealthPlugin());
+puppeteer.use(AdBlockerPlugin({ blockTrackers: true }));
 
 const injectHTML = fse
   .readFileSync(join(__dirname, "../../assets", "inject.html"))
