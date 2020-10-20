@@ -6,8 +6,10 @@ import puppeteer from "puppeteer-extra";
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Page } from "puppeteer-extra/dist/puppeteer";
+import useProxy from "puppeteer-page-proxy";
 import logger from "../../utils/logger";
 import blockedSites from "./blocked";
+import { getRandomProxy } from "./proxy";
 
 logger.info("applying puppeteer-extra plugins");
 puppeteer.use(StealthPlugin());
@@ -20,16 +22,17 @@ const blockedRegExp = new RegExp("(" + blockedSites.join("|") + ")", "i");
 
 async function interceptRequest(page: Page) {
   await page.setRequestInterception(true);
+  const proxy = await getRandomProxy();
   page.on("request", async (request) => {
     try {
       const url = request.url();
       if (blockedRegExp.test(url)) {
         request.abort();
       } else {
-        request.continue();
+        await useProxy(request, proxy);
       }
     } catch (e) {
-      console.log("ONREQUEST", e);
+      console.log("ONREQUEST", e.message);
     }
   });
 }
