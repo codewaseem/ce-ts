@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  chrome:
+    image: "browserless/chrome"
+    ports:
+      - 3000:3000
+  app:
+    build:
+      context: .
+    ports:
+      - 1338:1338
+      - 9229:9229
+    environment:
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    volumes:
+      - ./:/usr/app
+    command: yarn dev
