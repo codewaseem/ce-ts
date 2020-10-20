@@ -29,10 +29,11 @@ async function interceptRequest(page: Page) {
       if (blockedRegExp.test(url)) {
         request.abort();
       } else {
+        logger.log("Using proxy", proxy);
         await useProxy(request, proxy);
       }
     } catch (e) {
-      console.log("ONREQUEST", e.message);
+      logger.error("ONREQUEST", e.message);
     }
   });
 }
@@ -55,7 +56,6 @@ export default async function clonePage({
   logger.info("CONNECTED");
 
   const page = await browser.newPage();
-  page.setDefaultTimeout(28 * 1000);
 
   await interceptRequest(page);
   await page.goto(url, { waitUntil: "networkidle2" });
