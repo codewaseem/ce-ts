@@ -25,7 +25,7 @@ export default async function getCloneFunction(): Promise<
       logger.info("done");
       return getPageCDNPath(userId, url);
     } catch (e) {
-      logger.error(e);
+      console.log(`Error`, e);
       return "/scrape-error.html";
     }
   };

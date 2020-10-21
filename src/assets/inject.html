@@ -100,7 +100,6 @@
   function clickHandler(e) {
     e.preventDefault();
     const xPath = getPathTo(e.target);
-    e.target.setAttribute("style", "");
     const outerHTML = e.target.outerHTML;
     window.top.postMessage({ xPath, outerHTML }, "*");
   }

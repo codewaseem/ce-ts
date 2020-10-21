@@ -3,7 +3,7 @@ import { JSDOM } from "jsdom";
 import mhtml2html from "mhtml2html";
 import { join } from "path";
 import puppeteer from "puppeteer-extra";
-import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
+// import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Page } from "puppeteer-extra/dist/puppeteer";
 import useProxy from "puppeteer-page-proxy";
@@ -11,48 +11,11 @@ import logger from "../../utils/logger";
 
 logger.info("applying puppeteer-extra plugins");
 puppeteer.use(StealthPlugin());
-puppeteer.use(AdBlockerPlugin({ blockTrackers: true }));
+// puppeteer.use(AdBlockerPlugin({ blockTrackers: true }));
 
 const injectHTML = fse
   .readFileSync(join(__dirname, "../../assets", "inject.html"))
   .toString();
-
-async function interceptRequest(page: Page) {
-  await page.setRequestInterception(true);
-  const proxy = `http://p.webshare.io:19999`;
-  logger.info("Using proxy");
-  logger.info(proxy);
-
-  await useProxy(page, proxy);
-
-  // page.on("request", async (request) => {
-  //   try {
-  //     await useProxy(request, proxy);
-  //   } catch (e) {
-  //     logger.error(e.message);
-  //   }
-  // });
-
-  page.on("requestfinished", async (request) => {
-    const response = request.response();
-    if (response?.url() == page.url()) {
-      logger.info("request finished");
-
-      logger.info(
-        JSON.stringify(
-          {
-            status: response?.status(),
-            url: response?.url(),
-            statusText: response?.statusText(),
-            text: response?.text(),
-          },
-          null,
-          2
-        )
-      );
-    }
-  });
-}
 
 export default async function clonePage({
   url,
@@ -69,50 +32,53 @@ export default async function clonePage({
     browserWSEndpoint: `ws://chrome:3000`,
   });
 
-  logger.info("CONNECTED");
-
   const page = await browser.newPage();
+  page.setDefaultTimeout(0);
 
   await interceptRequest(page);
-  page.setDefaultTimeout(0);
-  await page.goto(url, { waitUntil: "networkidle2" });
+  try {
+    console.log("cloning", url);
+    await page.goto(url, { waitUntil: "networkidle2" });
 
-  await page.waitForTimeout(waitFor);
+    await page.waitForTimeout(waitFor);
 
-  if (pauseMedia) {
-    page.frames().forEach((frame) => {
-      frame.evaluate(() => {
-        document
-          .querySelectorAll<HTMLMediaElement>("video, audio")
-          .forEach((m) => {
-            if (!m) return;
-            if (m.pause) m.pause();
-            m.preload = "none";
-          });
-      });
-    });
-  }
-
-  await page.evaluate(
-    async ({ scrollToBottom }) => {
-      if (!scrollToBottom) return;
-      else {
-        const sHeight = document.documentElement.scrollHeight;
-        let sBy = 200;
-        await new Promise((resolve) => {
-          setTimeout(function cb() {
-            if (sBy > sHeight) return resolve();
-            window.scrollBy(0, sBy);
-            sBy += 200;
-            setTimeout(cb, 200);
-          }, 200);
+    if (pauseMedia) {
+      page.frames().forEach((frame) => {
+        frame.evaluate(() => {
+          document
+            .querySelectorAll<HTMLMediaElement>("video, audio")
+            .forEach((m) => {
+              if (!m) return;
+              if (m.pause) m.pause();
+              m.preload = "none";
+            });
         });
-      }
+      });
+    }
 
-      return;
-    },
-    { scrollToBottom }
-  );
+    await page.evaluate(
+      async ({ scrollToBottom }) => {
+        if (!scrollToBottom) return;
+        else {
+          const sHeight = document.documentElement.scrollHeight;
+          let sBy = 200;
+          await new Promise((resolve) => {
+            setTimeout(function cb() {
+              if (sBy > sHeight) return resolve();
+              window.scrollBy(0, sBy);
+              sBy += 200;
+              setTimeout(cb, 200);
+            }, 200);
+          });
+        }
+
+        return;
+      },
+      { scrollToBottom }
+    );
+  } catch (e) {
+    console.log("page load error", e);
+  }
 
   const cdp = await page.target().createCDPSession();
   const { data } = (await cdp.send("Page.captureSnapshot", {
@@ -131,4 +97,41 @@ export default async function clonePage({
     .forEach((frame) => frame.remove());
 
   return htmlDoc;
+}
+
+async function interceptRequest(page: Page) {
+  try {
+    await page.setRequestInterception(true);
+    await applyProxy(page);
+    logRequestFinish(page);
+  } catch (e) {
+    logger.info("ERROR WHILE PROXYING");
+    console.log(e);
+  }
+}
+
+function logRequestFinish(page: Page) {
+  page.on("requestfinished", async (req) => {
+    console.log("Request finished");
+    // if (req.url() == page.url()) {
+    const response = req.response();
+    console.log(req.headers());
+    console.log({
+      status: response?.status(),
+      url: response?.url(),
+      statusText: response?.statusText(),
+    });
+    const status = response?.status() ?? 200;
+    if (status >= 400 && status < 600) {
+      console.log({ body: await response?.text() });
+    }
+    // }
+  });
+}
+
+async function applyProxy(page: Page) {
+  const proxy = `http://rykgwtyg-rotate:dzo1s0n1pl9r@p.webshare.io:80`;
+  logger.info("Using proxy");
+  logger.info(proxy);
+  await useProxy(page, proxy);
 }
