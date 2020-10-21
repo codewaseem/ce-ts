@@ -8,7 +8,6 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Page } from "puppeteer-extra/dist/puppeteer";
 import useProxy from "puppeteer-page-proxy";
 import logger from "../../utils/logger";
-import { getRandomProxy } from "./proxy";
 
 logger.info("applying puppeteer-extra plugins");
 puppeteer.use(StealthPlugin());
@@ -20,17 +19,19 @@ const injectHTML = fse
 
 async function interceptRequest(page: Page) {
   await page.setRequestInterception(true);
-  const proxy = await getRandomProxy();
+  const proxy = `http://p.webshare.io:19999`;
   logger.info("Using proxy");
   logger.info(proxy);
 
-  page.on("request", async (request) => {
-    try {
-      await useProxy(request, proxy);
-    } catch (e) {
-      logger.error(e.message);
-    }
-  });
+  await useProxy(page, proxy);
+
+  // page.on("request", async (request) => {
+  //   try {
+  //     await useProxy(request, proxy);
+  //   } catch (e) {
+  //     logger.error(e.message);
+  //   }
+  // });
 
   page.on("requestfinished", async (request) => {
     const response = request.response();
@@ -73,6 +74,7 @@ export default async function clonePage({
   const page = await browser.newPage();
 
   await interceptRequest(page);
+  page.setDefaultTimeout(0);
   await page.goto(url, { waitUntil: "networkidle2" });
 
   await page.waitForTimeout(waitFor);
