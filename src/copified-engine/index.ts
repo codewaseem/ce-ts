@@ -9,7 +9,7 @@ import {
 export default async function getCloneFunction(): Promise<
   (userId: string, url: string) => Promise<string>
 > {
-  return async (userId: string, url: string, forceReload = false) => {
+  return async (userId: string, url: string, forceReload = true) => {
     if (!forceReload && (await isUserPageExists(userId, url))) {
       logger.info("Returning from cache");
       return getPageCDNPath(userId, url);
@@ -20,14 +20,13 @@ export default async function getCloneFunction(): Promise<
       const htmlDoc = await clonePage({
         url,
       });
-
       logger.info("Page cloned, saving page");
       await saveUserPage({ url, userId, pageData: htmlDoc.serialize() });
       logger.info("done");
       return getPageCDNPath(userId, url);
     } catch (e) {
       logger.error(e);
+      return "/scrape-error.html";
     }
-    return "";
   };
 }

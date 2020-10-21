@@ -3,6 +3,13 @@ import { join } from "path";
 import config from "../config";
 const basePath = config.BASE_CLONED_PAGES_PATH;
 
+// const redisClient = redis.createClient({
+//   host: "redis",
+//   port: 6379,
+// });
+
+// const get = promisify(redisClient.get).bind(redisClient);
+// const set = promisify(redisClient.set).bind(redisClient);
 const cache: {
   [key: string]: number;
 } = {};
