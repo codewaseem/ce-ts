@@ -25,6 +25,7 @@ async function interceptRequest(page: Page) {
   const proxy = await getRandomProxy();
   logger.info("Using proxy");
   logger.info(proxy);
+  await useProxy(page, proxy);
 
   page.on("request", async (request) => {
     try {
@@ -32,7 +33,7 @@ async function interceptRequest(page: Page) {
       if (blockedRegExp.test(url)) {
         request.abort();
       } else {
-        await useProxy(request, proxy);
+        request.continue();
       }
     } catch (e) {
       logger.error(e.message);
