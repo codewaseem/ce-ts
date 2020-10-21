@@ -23,17 +23,39 @@ const blockedRegExp = new RegExp("(" + blockedSites.join("|") + ")", "i");
 async function interceptRequest(page: Page) {
   await page.setRequestInterception(true);
   const proxy = await getRandomProxy();
+  logger.info("Using proxy");
+  logger.info(proxy);
+
   page.on("request", async (request) => {
     try {
       const url = request.url();
       if (blockedRegExp.test(url)) {
         request.abort();
       } else {
-        logger.log("Using proxy", proxy);
         await useProxy(request, proxy);
       }
     } catch (e) {
-      logger.error("ONREQUEST", e.message);
+      logger.error(e.message);
+    }
+  });
+
+  page.on("requestfinished", async (request) => {
+    const response = request.response();
+    if (response?.url() == page.url()) {
+      logger.info("request finished");
+
+      logger.info(
+        JSON.stringify(
+          {
+            status: response?.status(),
+            url: response?.url(),
+            statusText: response?.statusText(),
+            text: response?.text(),
+          },
+          null,
+          2
+        )
+      );
     }
   });
 }
@@ -59,6 +81,7 @@ export default async function clonePage({
 
   await interceptRequest(page);
   await page.goto(url, { waitUntil: "networkidle2" });
+
   await page.waitForTimeout(waitFor);
 
   if (pauseMedia) {
