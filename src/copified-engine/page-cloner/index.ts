@@ -3,15 +3,14 @@ import { JSDOM } from "jsdom";
 import mhtml2html from "mhtml2html";
 import { join } from "path";
 import puppeteer from "puppeteer-extra";
-// import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
+import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { Page } from "puppeteer-extra/dist/puppeteer";
-import useProxy from "puppeteer-page-proxy";
+import config from "../../config";
 import logger from "../../utils/logger";
 
 logger.info("applying puppeteer-extra plugins");
 puppeteer.use(StealthPlugin());
-// puppeteer.use(AdBlockerPlugin({ blockTrackers: true }));
+puppeteer.use(AdBlockerPlugin({ blockTrackers: true }));
 
 const injectHTML = fse
   .readFileSync(join(__dirname, "../../assets", "inject.html"))
@@ -29,13 +28,19 @@ export default async function clonePage({
   pauseMedia?: boolean;
 }): Promise<JSDOM> {
   const browser = await puppeteer.connect({
-    browserWSEndpoint: `ws://chrome:3000`,
+    browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
+    ignoreHTTPSErrors: true,
   });
 
   const page = await browser.newPage();
+
+  await page.authenticate({
+    username: config.PROXY_SERVER_USERNAME,
+    password: config.PROXY_SERVER_PASSWORD,
+  });
+
   page.setDefaultTimeout(0);
 
-  await interceptRequest(page);
   try {
     console.log("cloning", url);
     await page.goto(url, { waitUntil: "networkidle2" });
@@ -97,41 +102,4 @@ export default async function clonePage({
     .forEach((frame) => frame.remove());
 
   return htmlDoc;
-}
-
-async function interceptRequest(page: Page) {
-  try {
-    await page.setRequestInterception(true);
-    await applyProxy(page);
-    logRequestFinish(page);
-  } catch (e) {
-    logger.info("ERROR WHILE PROXYING");
-    console.log(e);
-  }
-}
-
-function logRequestFinish(page: Page) {
-  page.on("requestfinished", async (req) => {
-    console.log("Request finished");
-    // if (req.url() == page.url()) {
-    const response = req.response();
-    console.log(req.headers());
-    console.log({
-      status: response?.status(),
-      url: response?.url(),
-      statusText: response?.statusText(),
-    });
-    const status = response?.status() ?? 200;
-    if (status >= 400 && status < 600) {
-      console.log({ body: await response?.text() });
-    }
-    // }
-  });
-}
-
-async function applyProxy(page: Page) {
-  const proxy = `http://rykgwtyg-rotate:dzo1s0n1pl9r@p.webshare.io:80`;
-  logger.info("Using proxy");
-  logger.info(proxy);
-  await useProxy(page, proxy);
 }
