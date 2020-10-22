@@ -5,6 +5,7 @@ import { join } from "path";
 import puppeteer from "puppeteer-extra";
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { Page } from "puppeteer-extra/dist/puppeteer";
 import config from "../../config";
 import logger from "../../utils/logger";
 
@@ -27,20 +28,84 @@ export default async function clonePage({
   scrollToBottom?: boolean;
   pauseMedia?: boolean;
 }): Promise<JSDOM> {
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
-    ignoreHTTPSErrors: true,
+  const page = await getPage();
+
+  addPageEventListeners(page);
+
+  console.log("fetching", url);
+  await page.goto(url, { waitUntil: "networkidle2" });
+  await page.waitForTimeout(waitFor);
+  if (pauseMedia) {
+    pausePageMedia(page);
+  }
+
+  console.log("Evaluating page script");
+  await evaluateScriptInPage(page, scrollToBottom);
+
+  console.log("Capturing page data");
+  const htmlDoc = await getHTMLDoc(page);
+
+  console.log("Done: closing page now");
+  await page.close();
+  return htmlDoc;
+}
+
+async function getHTMLDoc(page: Page) {
+  const cdp = await page.target().createCDPSession();
+  const { data } = (await cdp.send("Page.captureSnapshot", {
+    format: "mhtml",
+  })) as { data: string };
+
+  const htmlDoc = mhtml2html.convert(data, {
+    parseDOM: (html: string) => new JSDOM(html),
+  }) as JSDOM;
+
+  htmlDoc.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
+  htmlDoc.window.document
+    .querySelectorAll("iframe[src^=cid]")
+    .forEach((frame) => frame.remove());
+
+  return htmlDoc;
+}
+
+async function evaluateScriptInPage(page: Page, scrollToBottom: boolean) {
+  await page.evaluate(
+    async ({ scrollToBottom }) => {
+      if (!scrollToBottom) return;
+      else {
+        const sHeight = document.documentElement.scrollHeight;
+        let sBy = 300;
+        await new Promise((resolve) => {
+          setTimeout(function cb() {
+            if (sBy > sHeight) return resolve();
+            window.scrollBy(0, sBy);
+            sBy += 300;
+            setTimeout(cb, 100);
+          }, 100);
+        });
+      }
+
+      return;
+    },
+    { scrollToBottom }
+  );
+}
+
+function pausePageMedia(page: Page) {
+  page.frames().forEach((frame) => {
+    frame.evaluate(() => {
+      document
+        .querySelectorAll<HTMLMediaElement>("video, audio")
+        .forEach((m) => {
+          if (!m) return;
+          if (m.pause) m.pause();
+          m.preload = "none";
+        });
+    });
   });
+}
 
-  const page = await browser.newPage();
-
-  await page.authenticate({
-    username: config.PROXY_SERVER_USERNAME,
-    password: config.PROXY_SERVER_PASSWORD,
-  });
-
-  page.setDefaultTimeout(0);
-
+function addPageEventListeners(page: Page) {
   page.on("requestfinished", (request) => {
     console.log("headers", request.headers());
     const response = request.response();
@@ -50,70 +115,21 @@ export default async function clonePage({
       url: response?.url(),
     });
   });
+}
 
-  try {
-    console.log("cloning", url);
-    await page.goto(url, { waitUntil: "networkidle2" });
+async function getPage(): Promise<Page> {
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
+    ignoreHTTPSErrors: true,
+  });
 
-    await page.waitForTimeout(waitFor);
+  const page = await browser.newPage();
+  page.setDefaultTimeout(0);
 
-    if (pauseMedia) {
-      page.frames().forEach((frame) => {
-        frame.evaluate(() => {
-          document
-            .querySelectorAll<HTMLMediaElement>("video, audio")
-            .forEach((m) => {
-              if (!m) return;
-              if (m.pause) m.pause();
-              m.preload = "none";
-            });
-        });
-      });
-    }
+  await page.authenticate({
+    username: config.PROXY_SERVER_USERNAME,
+    password: config.PROXY_SERVER_PASSWORD,
+  });
 
-    console.log("Evaluating page");
-
-    await page.evaluate(
-      async ({ scrollToBottom }) => {
-        if (!scrollToBottom) return;
-        else {
-          const sHeight = document.documentElement.scrollHeight;
-          let sBy = 200;
-          await new Promise((resolve) => {
-            setTimeout(function cb() {
-              if (sBy > sHeight) return resolve();
-              window.scrollBy(0, sBy);
-              sBy += 200;
-              setTimeout(cb, 200);
-            }, 200);
-          });
-        }
-
-        return;
-      },
-      { scrollToBottom }
-    );
-
-    console.log("Capturing page data");
-    const cdp = await page.target().createCDPSession();
-    const { data } = (await cdp.send("Page.captureSnapshot", {
-      format: "mhtml",
-    })) as { data: string };
-
-    const htmlDoc = mhtml2html.convert(data, {
-      parseDOM: (html: string) => new JSDOM(html),
-    }) as JSDOM;
-
-    htmlDoc.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
-    htmlDoc.window.document
-      .querySelectorAll("iframe[src^=cid]")
-      .forEach((frame) => frame.remove());
-
-    console.log("Done: closing page now");
-    await page.close();
-    return htmlDoc;
-  } catch (e) {
-    console.log("page load error", e);
-    return new JSDOM();
-  }
+  return page;
 }

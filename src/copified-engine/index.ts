@@ -20,6 +20,7 @@ export default async function getCloneFunction(): Promise<
       const htmlDoc = await clonePage({
         url,
       });
+
       const htmlString = htmlDoc.serialize();
 
       console.log("parsed html");
