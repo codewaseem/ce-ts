@@ -61,6 +61,8 @@ export default async function clonePage({
       });
     }
 
+    console.log("Evaluating page");
+
     await page.evaluate(
       async ({ scrollToBottom }) => {
         if (!scrollToBottom) return;
@@ -81,25 +83,27 @@ export default async function clonePage({
       },
       { scrollToBottom }
     );
+
+    console.log("Capturing page data");
+    const cdp = await page.target().createCDPSession();
+    const { data } = (await cdp.send("Page.captureSnapshot", {
+      format: "mhtml",
+    })) as { data: string };
+
+    const htmlDoc = mhtml2html.convert(data, {
+      parseDOM: (html: string) => new JSDOM(html),
+    }) as JSDOM;
+
+    htmlDoc.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
+    htmlDoc.window.document
+      .querySelectorAll("iframe[src^=cid]")
+      .forEach((frame) => frame.remove());
+
+    console.log("Done: closing page now");
+    await page.close();
+    return htmlDoc;
   } catch (e) {
     console.log("page load error", e);
+    return new JSDOM();
   }
-
-  const cdp = await page.target().createCDPSession();
-  const { data } = (await cdp.send("Page.captureSnapshot", {
-    format: "mhtml",
-  })) as { data: string };
-
-  page.close();
-
-  const htmlDoc = mhtml2html.convert(data, {
-    parseDOM: (html: string) => new JSDOM(html),
-  }) as JSDOM;
-
-  htmlDoc.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
-  htmlDoc.window.document
-    .querySelectorAll("iframe[src^=cid]")
-    .forEach((frame) => frame.remove());
-
-  return htmlDoc;
 }
