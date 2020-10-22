@@ -10,6 +10,10 @@ services:
     command: redis-server
   chrome:
     image: "browserless/chrome"
+    environment:
+      - CONNECTION_TIMEOUT=180000
+      - MAX_CONCURRENT_SESSIONS=3
+      - ENABLE_CORS=true
     ports:
       - 3000:3000
   app:
