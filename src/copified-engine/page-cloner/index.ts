@@ -41,6 +41,16 @@ export default async function clonePage({
 
   page.setDefaultTimeout(0);
 
+  page.on("requestfinished", (request) => {
+    console.log("headers", request.headers());
+    const response = request.response();
+    console.log("response", {
+      ok: response?.ok(),
+      status: response?.status(),
+      url: response?.url(),
+    });
+  });
+
   try {
     console.log("cloning", url);
     await page.goto(url, { waitUntil: "networkidle2" });

@@ -20,8 +20,11 @@ export default async function getCloneFunction(): Promise<
       const htmlDoc = await clonePage({
         url,
       });
-      logger.info("Page cloned, saving page");
-      await saveUserPage({ url, userId, pageData: htmlDoc.serialize() });
+      const htmlString = htmlDoc.serialize();
+
+      console.log("parsed html");
+
+      await saveUserPage({ url, userId, pageData: htmlString });
       logger.info("done");
       return getPageCDNPath(userId, url);
     } catch (e) {
