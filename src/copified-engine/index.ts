@@ -9,7 +9,7 @@ import {
 export default async function getCloneFunction(): Promise<
   (userId: string, url: string) => Promise<string>
 > {
-  return async (userId: string, url: string, forceReload = true) => {
+  return async (userId: string, url: string, forceReload = false) => {
     if (!forceReload && (await isUserPageExists(userId, url))) {
       logger.info("Returning from cache");
       return getPageCDNPath(userId, url);
