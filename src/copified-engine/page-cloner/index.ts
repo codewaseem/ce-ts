@@ -17,7 +17,7 @@ const injectHTML = fse
   .readFileSync(join(__dirname, "../../assets", "inject.html"))
   .toString();
 
-export default async function clonePage({
+export default async function downloadPage({
   url,
   waitFor = 1,
   scrollToBottom = true,
