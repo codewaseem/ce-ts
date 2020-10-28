@@ -170,9 +170,11 @@ function addPageEventListeners(page: Page) {
 }
 
 async function startSession(): Promise<{ browser: Browser; page: Page }> {
-  // ?--proxy-server=${config.PROXY_SERVER}
+  const browserArgs = config.PROXY_SERVER
+    ? `?--proxy-server=${config.PROXY_SERVER}`
+    : "";
   const browser = await puppeteer.connect({
-    browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
+    browserWSEndpoint: `ws://chrome:3000${browserArgs}`,
     ignoreHTTPSErrors: true,
   });
 
