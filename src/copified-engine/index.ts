@@ -1,3 +1,4 @@
+import { SsrArgs } from "../types/schema-types";
 import logger from "../utils/logger";
 import downloadPage from "./page-cloner";
 import {
@@ -8,17 +9,16 @@ import {
 
 type Args = {
   userId: string;
-  url: string;
-  forceReload?: boolean;
-};
+} & SsrArgs;
 
 export default async function clonePage({
   userId,
   url,
-  forceReload = false,
+  options,
 }: Args): Promise<string> {
-  console.log("forceReload", forceReload);
-  if (!forceReload && (await isUserPageExists(userId, url))) {
+  console.log("url", url);
+  console.log("options", options);
+  if (!options?.forceReload && (await isUserPageExists(userId, url))) {
     logger.info("Returning from cache");
     return getPageCDNPath(userId, url);
   }
@@ -27,6 +27,7 @@ export default async function clonePage({
     logger.info(`Cloning page ${url}`);
     const htmlDoc = await downloadPage({
       url,
+      browserOptions: options?.browserOptions,
     });
 
     const htmlString = htmlDoc.serialize();

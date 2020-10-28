@@ -7,6 +7,7 @@ import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Page } from "puppeteer-extra/dist/puppeteer";
 import config from "../../config";
+import { BrowserOptions } from "../../types/schema-types";
 import logger from "../../utils/logger";
 
 logger.info("applying puppeteer-extra plugins");
@@ -17,18 +18,31 @@ const injectHTML = fse
   .readFileSync(join(__dirname, "../../assets", "inject.html"))
   .toString();
 
+type Args = {
+  url: string;
+  waitFor?: number;
+  scrollToBottom?: boolean;
+  pauseMedia?: boolean;
+  browserOptions?: BrowserOptions;
+};
+
 export default async function downloadPage({
   url,
   waitFor = 1,
   scrollToBottom = true,
   pauseMedia = true,
-}: {
-  url: string;
-  waitFor?: number;
-  scrollToBottom?: boolean;
-  pauseMedia?: boolean;
-}): Promise<JSDOM> {
+  browserOptions,
+}: Args): Promise<JSDOM> {
   const page = await getPage();
+
+  if (browserOptions?.height && browserOptions.width)
+    await page.setViewport({
+      width: browserOptions.width || 800,
+      height: browserOptions.height || 600,
+    });
+
+  if (browserOptions?.userAgent)
+    await page.setUserAgent(browserOptions.userAgent);
 
   addPageEventListeners(page);
 
@@ -41,6 +55,8 @@ export default async function downloadPage({
 
   console.log("Evaluating page script");
   await evaluateScriptInPage(page, scrollToBottom);
+
+  await page.keyboard.press("Escape");
 
   console.log("Capturing page data");
   const htmlDoc = await getHTMLDoc(page);

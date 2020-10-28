@@ -1,19 +1,14 @@
+import { Arg, Query, Resolver } from "type-graphql";
 import clonePage from "../../copified-engine";
+import { SsrArgs } from "../../types/schema-types";
 
-type SSRArgs = {
-  url: string;
-  forceReload?: boolean;
-};
-
-const resolvers = {
-  Query: {
-    ssr: async (_: any, args: SSRArgs): Promise<string> => {
-      return clonePage({
-        ...args,
-        userId: "12632", // extract userId from auth-token;
-      });
-    },
-  },
-};
-
-export default resolvers;
+@Resolver()
+export class CopifiedEngineResolver {
+  @Query(() => String)
+  async ssr(@Arg("inputData") inputData: SsrArgs): Promise<string> {
+    return clonePage({
+      ...inputData,
+      userId: "12632", // extract userId from auth-token;
+    });
+  }
+}
