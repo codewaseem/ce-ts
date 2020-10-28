@@ -35,9 +35,11 @@ const main = async () => {
     cors: false,
   });
 
-  app.listen(app.get("port"), () => {
-    console.log(`Server started at ${app.get("port")}`);
-  });
+  app
+    .listen(app.get("port"), () => {
+      console.log(`Server started at ${app.get("port")}`);
+    })
+    .setTimeout(5 * 60 * 1000); // set timeout for 5 minutes
 };
 
 main();

@@ -94,7 +94,7 @@ async function getHTMLDoc(page: Page) {
 async function evaluateScriptInPage(page: Page, scrollToBottom: boolean) {
   await page.evaluate(
     async ({ scrollToBottom }) => {
-      const scrollDistance = 200;
+      const scrollDistance = 100;
       const scrollTimeout = 300;
 
       if (!scrollToBottom) return;
@@ -112,30 +112,29 @@ async function evaluateScriptInPage(page: Page, scrollToBottom: boolean) {
           }, scrollTimeout);
         });
 
-        //scroll back to top
-        await new Promise((resolve) => {
-          setTimeout(function cb() {
-            if (sBy <= 0) return resolve();
+        await Promise.all([
+          await Promise.all(
+            Array.from(document.getElementsByTagName("img"), (image) => {
+              if (image.complete) {
+                return;
+              }
 
-            window.scrollBy(0, -sBy);
-            sBy -= scrollDistance;
-            setTimeout(cb, scrollTimeout);
-          }, scrollDistance);
-        });
+              return new Promise((resolve, reject) => {
+                image.addEventListener("load", resolve);
+                image.addEventListener("error", reject);
+              });
+            })
+          ),
+          await new Promise((resolve) => {
+            setTimeout(function cb() {
+              if (sBy <= 0) return resolve();
 
-        // wait for lazy-loaded images
-        await Promise.all(
-          Array.from(document.getElementsByTagName("img"), (image) => {
-            if (image.complete) {
-              return;
-            }
-
-            return new Promise((resolve, reject) => {
-              image.addEventListener("load", resolve);
-              image.addEventListener("error", reject);
-            });
-          })
-        );
+              window.scrollBy(0, -sBy);
+              sBy -= scrollDistance;
+              setTimeout(cb, scrollTimeout);
+            }, scrollDistance);
+          }),
+        ]);
       }
 
       return;
@@ -171,6 +170,7 @@ function addPageEventListeners(page: Page) {
 }
 
 async function startSession(): Promise<{ browser: Browser; page: Page }> {
+  // ?--proxy-server=${config.PROXY_SERVER}
   const browser = await puppeteer.connect({
     browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
     ignoreHTTPSErrors: true,
