@@ -5,7 +5,7 @@ import { join } from "path";
 import puppeteer from "puppeteer-extra";
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { Page } from "puppeteer-extra/dist/puppeteer";
+import { Browser, Page } from "puppeteer-extra/dist/puppeteer";
 import config from "../../config";
 import { BrowserOptions } from "../../types/schema-types";
 import logger from "../../utils/logger";
@@ -28,12 +28,12 @@ type Args = {
 
 export default async function downloadPage({
   url,
-  waitFor = 1,
+  waitFor = 10 * 1000,
   scrollToBottom = true,
   pauseMedia = true,
   browserOptions,
 }: Args): Promise<JSDOM> {
-  const page = await getPage();
+  const { browser, page } = await startSession();
 
   if (browserOptions?.height && browserOptions.width)
     await page.setViewport({
@@ -44,11 +44,13 @@ export default async function downloadPage({
   if (browserOptions?.userAgent)
     await page.setUserAgent(browserOptions.userAgent);
 
-  addPageEventListeners(page);
+  // addPageEventListeners(page);
 
   console.log("fetching", url);
-  await page.goto(url, { waitUntil: "networkidle2" });
+  await page.goto(url, { waitUntil: "networkidle0" });
+
   await page.waitForTimeout(waitFor);
+
   if (pauseMedia) {
     pausePageMedia(page);
   }
@@ -56,13 +58,18 @@ export default async function downloadPage({
   console.log("Evaluating page script");
   await evaluateScriptInPage(page, scrollToBottom);
 
+  await page.waitForTimeout(waitFor);
+
   await page.keyboard.press("Escape");
 
   console.log("Capturing page data");
   const htmlDoc = await getHTMLDoc(page);
 
   console.log("Done: closing page now");
+
   await page.close();
+  await browser.close();
+
   return htmlDoc;
 }
 
@@ -87,18 +94,48 @@ async function getHTMLDoc(page: Page) {
 async function evaluateScriptInPage(page: Page, scrollToBottom: boolean) {
   await page.evaluate(
     async ({ scrollToBottom }) => {
+      const scrollDistance = 200;
+      const scrollTimeout = 300;
+
       if (!scrollToBottom) return;
       else {
         const sHeight = document.documentElement.scrollHeight;
-        let sBy = 300;
+        let sBy = scrollDistance;
+
+        // scroll to bottom
         await new Promise((resolve) => {
           setTimeout(function cb() {
             if (sBy > sHeight) return resolve();
             window.scrollBy(0, sBy);
-            sBy += 300;
-            setTimeout(cb, 100);
-          }, 100);
+            sBy += scrollDistance;
+            setTimeout(cb, scrollTimeout);
+          }, scrollTimeout);
         });
+
+        //scroll back to top
+        await new Promise((resolve) => {
+          setTimeout(function cb() {
+            if (sBy <= 0) return resolve();
+
+            window.scrollBy(0, -sBy);
+            sBy -= scrollDistance;
+            setTimeout(cb, scrollTimeout);
+          }, scrollDistance);
+        });
+
+        // wait for lazy-loaded images
+        await Promise.all(
+          Array.from(document.getElementsByTagName("img"), (image) => {
+            if (image.complete) {
+              return;
+            }
+
+            return new Promise((resolve, reject) => {
+              image.addEventListener("load", resolve);
+              image.addEventListener("error", reject);
+            });
+          })
+        );
       }
 
       return;
@@ -133,7 +170,7 @@ function addPageEventListeners(page: Page) {
   });
 }
 
-async function getPage(): Promise<Page> {
+async function startSession(): Promise<{ browser: Browser; page: Page }> {
   const browser = await puppeteer.connect({
     browserWSEndpoint: `ws://chrome:3000?--proxy-server=${config.PROXY_SERVER}`,
     ignoreHTTPSErrors: true,
@@ -147,5 +184,5 @@ async function getPage(): Promise<Page> {
     password: config.PROXY_SERVER_PASSWORD,
   });
 
-  return page;
+  return { browser, page };
 }

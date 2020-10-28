@@ -36,7 +36,10 @@ export default async function clonePage({
 
     await saveUserPage({ url, userId, pageData: htmlString });
     logger.info("done");
-    return getPageCDNPath(userId, url);
+    const pagePath = getPageCDNPath(userId, url);
+
+    logger.info(`path: ${pagePath}`);
+    return pagePath;
   } catch (e) {
     console.log(`Error`, e);
     return "/scrape-error.html";
