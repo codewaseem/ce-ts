@@ -37,8 +37,8 @@ export default async function downloadPage({
 
   if (browserOptions?.height && browserOptions.width)
     await page.setViewport({
-      width: browserOptions.width || 800,
-      height: browserOptions.height || 600,
+      width: Math.floor(browserOptions.width) || 800,
+      height: Math.floor(browserOptions.height) || 600,
     });
 
   if (browserOptions?.userAgent)
