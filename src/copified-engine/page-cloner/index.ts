@@ -28,7 +28,7 @@ type Args = {
 
 export default async function downloadPage({
   url,
-  waitFor = 10 * 1000,
+  waitFor = 3 * 1000,
   scrollToBottom = true,
   pauseMedia = true,
   browserOptions,
