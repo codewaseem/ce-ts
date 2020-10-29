@@ -28,7 +28,7 @@ type Args = {
 
 export default async function downloadPage({
   url,
-  waitFor = 10 * 1000,
+  waitFor = 5 * 1000,
   scrollToBottom = true,
   pauseMedia = true,
   browserOptions,
@@ -94,7 +94,7 @@ async function getHTMLDoc(page: Page) {
 async function evaluateScriptInPage(page: Page, scrollToBottom: boolean) {
   await page.evaluate(
     async ({ scrollToBottom }) => {
-      const scrollDistance = 100;
+      const scrollDistance = 250;
       const scrollTimeout = 300;
 
       if (!scrollToBottom) return;
