@@ -8,6 +8,7 @@ import {
   PageOptionsPlugin,
   InjectToDomPlugin,
   TimeTrackerPlugin,
+  CEEventPlugin,
 } from "./plugins";
 import { CEPlugin } from "./types";
 import fse from "fs-extra";
@@ -45,7 +46,7 @@ class CopifiedEngine {
     await this.closeBrowser();
 
     for (const plugin of this.plugins) {
-      await plugin.events.onFinish();
+      await plugin.events.onFinish(content);
     }
 
     return content;
@@ -156,19 +157,18 @@ if (require.main == module) {
   const cpe = new CopifiedEngine({
     url: "https://noon.com",
     plugins: [
+      CEEventPlugin,
       ProxyPlugin,
       PageOptionsPlugin({
         width: 480,
         userAgent: `Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1`,
       }),
       WaitForPlugin({
-        waitUntil: "networkidle2",
+        waitUntil: "load",
       }),
       InjectToDomPlugin,
       TimeTrackerPlugin(),
     ],
   });
-  cpe
-    .execute()
-    .then((content) => fse.outputFile(join(__dirname, "test.html"), content));
+  cpe.execute();
 }

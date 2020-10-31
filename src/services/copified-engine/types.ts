@@ -8,7 +8,7 @@ export const BaseCEPlugin = {
       // do nothing, it will be overloaded with other plugins
     },
 
-    async onFinish(): Promise<void> {
+    async onFinish(content: string): Promise<void> {
       // do nothing, it will be overloaded with other plugins
     },
 
@@ -67,3 +67,5 @@ export const BaseCEPlugin = {
 };
 
 export type CEPlugin = typeof BaseCEPlugin;
+
+export type CEEvents = keyof CEPlugin["events"];
