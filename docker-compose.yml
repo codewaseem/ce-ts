@@ -18,5 +18,8 @@ services:
       - 3000:3000
   app:
     build: .
+    depends_on:
+      - redis
+      - chrome
     ports:
       - 1338:1338
