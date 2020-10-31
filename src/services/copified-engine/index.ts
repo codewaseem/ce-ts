@@ -2,11 +2,17 @@ import { Browser, Page } from "puppeteer-extra/dist/puppeteer";
 import puppeteer from "puppeteer-extra";
 import qs from "querystring";
 import { BrowserOptions, DirectNavigationOptions } from "puppeteer";
-import { ProxyPlugin, WaitForPlugin, PageOptionsPlugin } from "./plugins";
+import {
+  ProxyPlugin,
+  WaitForPlugin,
+  PageOptionsPlugin,
+  InjectToDomPlugin,
+} from "./plugins";
 import { CEPlugin } from "./types";
-import { writeFile } from "fs/promises";
 import fse from "fs-extra";
 import { join } from "path";
+import { JSDOM } from "jsdom";
+import mhtml2html from "mhtml2html";
 
 interface CopifiedEngineProps {
   url: string;
@@ -30,13 +36,30 @@ class CopifiedEngine {
     await this.openPage();
     await this.navigateToURL();
     await this.runPageScripts();
-    const content = await this.getPageContent();
+    const content = await this.capturePage();
     await this.closeBrowser();
     return content;
   }
 
-  private async getPageContent() {
-    return this.page.content();
+  private async capturePage() {
+    for (const plugin of this.plugins) {
+      await plugin.beforePageCapture(this.page);
+    }
+
+    const cdp = await this.page.target().createCDPSession();
+    const { data } = (await cdp.send("Page.captureSnapshot", {
+      format: "mhtml",
+    })) as { data: string };
+
+    const htmlDoc = mhtml2html.convert(data, {
+      parseDOM: (html: string) => new JSDOM(html),
+    }) as JSDOM;
+
+    for (const plugin of this.plugins) {
+      await plugin.afterPageCapture(this.page, htmlDoc);
+    }
+
+    return htmlDoc.serialize();
   }
 
   private async runPageScripts() {
@@ -102,14 +125,17 @@ class CopifiedEngine {
 
 if (require.main == module) {
   const cpe = new CopifiedEngine({
-    url: "https://joom.com",
+    url: "https://noon.com",
     plugins: [
       ProxyPlugin,
       PageOptionsPlugin({
         width: 480,
         userAgent: `Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1`,
       }),
-      WaitForPlugin(),
+      WaitForPlugin({
+        waitUntil: "networkidle2",
+      }),
+      InjectToDomPlugin,
     ],
   });
   cpe

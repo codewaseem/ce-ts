@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { BrowserOptions, DirectNavigationOptions } from "puppeteer";
 import { Page } from "puppeteer-extra/dist/puppeteer";
 
@@ -10,4 +11,6 @@ export interface CEPlugin {
   ): Promise<void>;
   afterPageNavigation(page: Page): Promise<void>;
   runPageScript(page: Page): Promise<void>;
+  beforePageCapture(page: Page): Promise<void>;
+  afterPageCapture(page: Page, htmlDoc: JSDOM): Promise<void>;
 }
