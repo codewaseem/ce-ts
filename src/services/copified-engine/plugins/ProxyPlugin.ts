@@ -1,20 +1,26 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import config from "../../../config";
-import { CEPlugin } from "../types";
-import BasePlugin from "./BasePlugin";
+import { CEPlugin, BaseCEPlugin } from "../types";
 
 const ProxyPlugin: CEPlugin = {
-  ...(BasePlugin as CEPlugin),
-  addBrowserLaunchFlags: async (flags) => {
-    flags["--proxy-server"] = config.PROXY_SERVER;
+  ...BaseCEPlugin,
+  events: {
+    ...BaseCEPlugin.events,
+    async afterPageOpen(page) {
+      await page.authenticate({
+        username: config.PROXY_SERVER_USERNAME,
+        password: config.PROXY_SERVER_PASSWORD,
+      });
+    },
   },
-  addBrowserOptions: async (options) => {
-    options.ignoreHTTPSErrors = true;
-  },
-  afterPageOpen: async (page) => {
-    await page.authenticate({
-      username: config.PROXY_SERVER_USERNAME,
-      password: config.PROXY_SERVER_PASSWORD,
-    });
+  methods: {
+    ...BaseCEPlugin.methods,
+    async addBrowserLaunchFlags(flags) {
+      flags["--proxy-server"] = config.PROXY_SERVER;
+    },
+    async addBrowserOptions(options) {
+      options.ignoreHTTPSErrors = true;
+    },
   },
 };
 

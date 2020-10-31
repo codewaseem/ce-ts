@@ -1,5 +1,4 @@
-import { CEPlugin } from "../types";
-import BasePlugin from "./BasePlugin";
+import { CEPlugin, BaseCEPlugin } from "../types";
 
 type PageOptions = Partial<{
   width: number;
@@ -13,14 +12,17 @@ const SetPageOptions: (options: PageOptions) => CEPlugin = ({
   userAgent = "",
 }: PageOptions) => {
   const plugin: CEPlugin = {
-    ...(BasePlugin as CEPlugin),
-    afterPageOpen: async (page) => {
-      await page.setViewport({
-        width: Math.floor(width),
-        height: Math.floor(height),
-      });
+    ...BaseCEPlugin,
+    events: {
+      ...BaseCEPlugin.events,
+      async afterPageOpen(page) {
+        await page.setViewport({
+          width: Math.floor(width),
+          height: Math.floor(height),
+        });
 
-      userAgent.length && (await page.setUserAgent(userAgent));
+        userAgent.length && (await page.setUserAgent(userAgent));
+      },
     },
   };
 

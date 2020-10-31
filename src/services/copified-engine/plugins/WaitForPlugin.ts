@@ -1,6 +1,5 @@
 import { DirectNavigationOptions } from "puppeteer";
-import { CEPlugin } from "../types";
-import BasePlugin from "./BasePlugin";
+import { BaseCEPlugin, CEPlugin } from "../types";
 
 const WaitForPlugin: (
   options: DirectNavigationOptions & {
@@ -8,14 +7,19 @@ const WaitForPlugin: (
   }
 ) => CEPlugin = (options) => {
   const plugin: CEPlugin = {
-    ...(BasePlugin as CEPlugin),
-    async afterPageOpen(page) {
-      const timeout = options.defaultTimeout ?? 0;
-      console.log(timeout);
-      page.setDefaultTimeout(timeout);
+    ...BaseCEPlugin,
+    events: {
+      ...BaseCEPlugin.events,
+      async afterPageOpen(page) {
+        const timeout = options.defaultTimeout ?? 0;
+        page.setDefaultTimeout(timeout);
+      },
     },
-    async setPageNavigationOptions(prevOptions) {
-      prevOptions.waitUntil = options.waitUntil;
+    methods: {
+      ...BaseCEPlugin.methods,
+      async setPageNavigationOptions(prevOptions) {
+        prevOptions.waitUntil = options.waitUntil;
+      },
     },
   };
 
