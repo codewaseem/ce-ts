@@ -1,4 +1,4 @@
-import { ObjectType, Field } from "type-graphql";
+import { ObjectType, Field, InputType } from "type-graphql";
 
 export interface PageClonePayload {
   url: string;
@@ -35,4 +35,34 @@ export class PageCloneEvent {
     nullable: true,
   })
   completedRequests?: number;
+}
+
+@InputType()
+export class BrowserOptions {
+  @Field(() => Number, { defaultValue: 800 })
+  width!: number;
+
+  @Field(() => Number, { defaultValue: 600 })
+  height!: number;
+
+  @Field(() => String, { nullable: true })
+  userAgent!: string;
+}
+
+@InputType()
+export class SsrOptions {
+  @Field(() => Boolean, { defaultValue: false })
+  forceReload!: boolean;
+
+  @Field(() => BrowserOptions, { nullable: true })
+  browserOptions?: BrowserOptions;
+}
+
+@InputType()
+export class SsrArgs {
+  @Field(() => String)
+  url!: string;
+
+  @Field(() => SsrOptions, { nullable: true })
+  options?: SsrOptions;
 }

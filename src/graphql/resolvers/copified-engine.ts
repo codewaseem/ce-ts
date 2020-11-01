@@ -1,4 +1,5 @@
 import {
+  Arg,
   Publisher,
   PubSub,
   Query,
@@ -6,13 +7,14 @@ import {
   Root,
   Subscription,
 } from "type-graphql";
-import CopifiedEngine from "../../services/copified-engine";
+import { clonePageAPI } from "../../services/copified-engine/api";
+import CopifiedEngine from "../../services/copified-engine/engine";
 import {
   CEEventPlugin,
   WaitForPlugin,
 } from "../../services/copified-engine/plugins";
-import GraphQLSubsPlugin from "../../services/copified-engine/plugins/GraphQLSubsPlugin";
-import { PageCloneEvent, PageClonePayload } from "../types";
+import { GraphQLSubsPlugin } from "../../services/copified-engine/plugins";
+import { PageCloneEvent, PageClonePayload, SsrArgs } from "../types";
 
 const PAGE_CLONE_TOPIC = "PAGE_CLONE";
 
@@ -30,26 +32,21 @@ export class CEResolver {
 
   @Query(() => String)
   async clonePage(
+    @Arg("inputData") inputData: SsrArgs,
     @PubSub(PAGE_CLONE_TOPIC) publish: Publisher<PageClonePayload>
   ): Promise<string> {
-    const ce = new CopifiedEngine({
-      url: "https://www.noon.com",
-      plugins: [
-        CEEventPlugin,
-        WaitForPlugin({
-          waitUntil: "load",
-        }),
-        GraphQLSubsPlugin(publish, {
-          url: `https://www.noon.com`,
-          userId: "123",
-        }),
-      ],
+    return await clonePageAPI({
+      url: inputData.url,
+      userId: "12355",
+      freshContent: inputData.options?.forceReload,
+      pageViewport: inputData.options?.browserOptions,
+      userAgent: inputData.options?.browserOptions?.userAgent,
+      // plugins: [
+      //   GraphQLSubsPlugin(publish, {
+      //     url: inputData.url,
+      //     userId: "12355",
+      //   }),
+      // ],
     });
-
-    const html = await ce.clone();
-
-    console.log("html");
-
-    return html.length.toString();
   }
 }

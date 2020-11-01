@@ -59,7 +59,7 @@ const GraphQLSubsPlugin = (
           if (!stopTemp && !page.isClosed()) {
             data = await (await captureCurrentDOM(page)).serialize();
             console.log(data.length);
-            setTimeout(cb, 5 * 1000);
+            setTimeout(cb, 15 * 1000);
           }
           return;
         }, 5 * 1000);
