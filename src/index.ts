@@ -5,7 +5,9 @@ import express from "express";
 import { join } from "path";
 import { buildSchema } from "type-graphql";
 import config from "./config";
+import http from "http";
 import { CopifiedEngineResolver } from "./graphql";
+import { CEResolver } from "./graphql/resolvers/copified-engine";
 
 const main = async () => {
   const app = express();
@@ -22,11 +24,16 @@ const main = async () => {
   app.use(express.static(join(process.cwd(), "public")));
 
   const schema = await buildSchema({
-    resolvers: [CopifiedEngineResolver],
+    resolvers: [CEResolver],
   });
 
   const apolloServer = new ApolloServer({
     schema,
+    context({ res }) {
+      return {
+        res,
+      };
+    },
     playground: true,
   });
 
@@ -35,7 +42,10 @@ const main = async () => {
     cors: false,
   });
 
-  app
+  const httpServer = http.createServer(app);
+  apolloServer.installSubscriptionHandlers(httpServer);
+
+  httpServer
     .listen(app.get("port"), () => {
       console.log(`Server started at ${app.get("port")}`);
     })

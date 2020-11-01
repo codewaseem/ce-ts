@@ -11,17 +11,15 @@ import {
   CEEventPlugin,
 } from "./plugins";
 import { CEPlugin } from "./types";
-import fse from "fs-extra";
-import { join } from "path";
-import { JSDOM } from "jsdom";
-import mhtml2html from "mhtml2html";
+import { captureCurrentDOM, getBrowserWSConnection } from "./utils";
+import logger from "../../utils/logger";
 
 interface CopifiedEngineProps {
   url: string;
   plugins?: CEPlugin[];
 }
 
-class CopifiedEngine {
+export default class CopifiedEngine {
   private plugins: CEPlugin[];
   private url: string;
 
@@ -33,17 +31,27 @@ class CopifiedEngine {
     this.url = url;
   }
 
-  async execute() {
+  async clone(): Promise<string> {
+    try {
+      return this.execute();
+    } catch (e) {
+      logger.error(e);
+      if (this.page && !this.page.isClosed()) await this.page.close();
+      return "";
+    }
+  }
+
+  private async execute(): Promise<string> {
     for (const plugin of this.plugins) {
       await plugin.events.onStart();
     }
 
-    await this.openBrowser();
+    await this.connectToBrowser();
     await this.openPage();
     await this.navigateToURL();
     await this.runPageScripts();
     const content = await this.capturePage();
-    await this.closeBrowser();
+    await this.closePage();
 
     for (const plugin of this.plugins) {
       await plugin.events.onFinish(content);
@@ -57,14 +65,7 @@ class CopifiedEngine {
       await plugin.events.beforePageCapture(this.page);
     }
 
-    const cdp = await this.page.target().createCDPSession();
-    const { data } = (await cdp.send("Page.captureSnapshot", {
-      format: "mhtml",
-    })) as { data: string };
-
-    const htmlDoc = mhtml2html.convert(data, {
-      parseDOM: (html: string) => new JSDOM(html),
-    }) as JSDOM;
+    const htmlDoc = await captureCurrentDOM(this.page);
 
     for (const plugin of this.plugins) {
       await plugin.events.afterPageCapture(this.page, htmlDoc);
@@ -114,7 +115,7 @@ class CopifiedEngine {
     }
   }
 
-  private async openBrowser(): Promise<void> {
+  private async connectToBrowser(): Promise<void> {
     const launchFlags = {};
     const browserOptions: BrowserOptions = {};
 
@@ -130,26 +131,21 @@ class CopifiedEngine {
       encodeURIComponent: qs.unescape,
     });
 
-    this.browser =
-      process.env.NODE_ENV != "production"
-        ? await puppeteer.launch({
-            headless: false,
-            args: browserArgsString.split("&"),
-            ...browserOptions,
-          })
-        : await puppeteer.connect({
-            browserWSEndpoint: `ws://chrome:3000${
-              browserArgsString.length ? `?${browserArgsString}` : ""
-            }`,
-            ...browserOptions,
-          });
+    const wsConnectionEndpoint = await getBrowserWSConnection();
+
+    this.browser = await puppeteer.connect({
+      browserWSEndpoint: `${wsConnectionEndpoint}${
+        browserArgsString.length ? `?${browserArgsString}` : ""
+      }`,
+      ...browserOptions,
+    });
 
     for (const plugin of this.plugins)
       plugin.events.afterBrowserOpen(this.browser);
   }
 
-  private async closeBrowser(): Promise<void> {
-    await this.browser.close();
+  private async closePage(): Promise<void> {
+    await this.page.close();
   }
 }
 
@@ -170,5 +166,5 @@ if (require.main == module) {
       TimeTrackerPlugin(),
     ],
   });
-  cpe.execute();
+  cpe.clone();
 }
