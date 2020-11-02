@@ -1,1 +1,1 @@
-export { CopifiedEngineResolver } from "./resolvers";
+export { CEResolver } from "./resolvers/copified-engine";

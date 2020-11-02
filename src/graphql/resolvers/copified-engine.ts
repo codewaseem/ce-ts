@@ -8,11 +8,6 @@ import {
   Subscription,
 } from "type-graphql";
 import { clonePageAPI } from "../../services/copified-engine/api";
-import CopifiedEngine from "../../services/copified-engine/engine";
-import {
-  CEEventPlugin,
-  WaitForPlugin,
-} from "../../services/copified-engine/plugins";
 import { GraphQLSubsPlugin } from "../../services/copified-engine/plugins";
 import { PageCloneEvent, PageClonePayload, SsrArgs } from "../types";
 
@@ -41,12 +36,12 @@ export class CEResolver {
       freshContent: inputData.options?.forceReload,
       pageViewport: inputData.options?.browserOptions,
       userAgent: inputData.options?.browserOptions?.userAgent,
-      // plugins: [
-      //   GraphQLSubsPlugin(publish, {
-      //     url: inputData.url,
-      //     userId: "12355",
-      //   }),
-      // ],
+      plugins: [
+        GraphQLSubsPlugin(publish, {
+          url: inputData.url,
+          userId: "12355",
+        }),
+      ],
     });
   }
 }

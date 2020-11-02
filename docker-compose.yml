@@ -18,6 +18,9 @@ services:
       - 3000:3000
   app:
     build: .
+    environment:
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+      - REDIS_HOST=redis
     depends_on:
       - redis
       - chrome

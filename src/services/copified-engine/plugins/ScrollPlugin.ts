@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import { BaseCEPlugin, CEPlugin } from "../types";
 
 const ScrollPlugin: CEPlugin = {
@@ -36,7 +37,10 @@ const ScrollPlugin: CEPlugin = {
             });
           })
         );
+
         window.scrollTo(0, 0);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       });
     },
   },

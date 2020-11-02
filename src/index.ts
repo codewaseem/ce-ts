@@ -6,8 +6,7 @@ import { join } from "path";
 import { buildSchema } from "type-graphql";
 import config from "./config";
 import http from "http";
-import { CopifiedEngineResolver } from "./graphql";
-import { CEResolver } from "./graphql/resolvers/copified-engine";
+import { CEResolver } from "./graphql";
 
 const main = async () => {
   const app = express();

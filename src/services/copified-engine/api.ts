@@ -43,7 +43,7 @@ export async function clonePageAPI({
 
   const basePlugins: CEPlugin[] = [
     CEEventPlugin,
-    // InjectToDomPlugin,
+    InjectToDomPlugin,
     WaitForPlugin({
       waitUntil: "networkidle2",
       ...navigationOptions,

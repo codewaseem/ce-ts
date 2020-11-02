@@ -1,12 +1,18 @@
 import { JSDOM } from "jsdom";
 import mhtml2html from "mhtml2html";
-import { Page } from "puppeteer-extra/dist/puppeteer";
+import { Browser, Page } from "puppeteer-extra/dist/puppeteer";
 import puppeteer from "puppeteer-extra";
 import logger from "../../utils/logger";
+import config from "../../config";
 
-const launchedBrowser = puppeteer.launch({
-  headless: false,
-});
+let launchedBrowser: Promise<Browser>;
+
+console.log("use local chrome", config.USE_LOCAL_CHROME);
+if (config.USE_LOCAL_CHROME) {
+  launchedBrowser = puppeteer.launch({
+    headless: false,
+  });
+}
 
 export async function captureCurrentDOM(page: Page): Promise<JSDOM> {
   try {
@@ -35,7 +41,7 @@ export async function captureCurrentDOM(page: Page): Promise<JSDOM> {
 
 export async function getBrowserWSConnection(): Promise<string> {
   try {
-    if (process.env.NODE_ENV != "production") {
+    if (config.USE_LOCAL_CHROME) {
       return await launchedBrowser.then((b) => b.wsEndpoint());
     } else {
       return Promise.resolve(`ws://chrome:3000`);

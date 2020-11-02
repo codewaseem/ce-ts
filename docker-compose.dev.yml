@@ -24,6 +24,7 @@ services:
       - 9229:9229
     environment:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+      - REDIS_HOST=redis
     depends_on:
       - redis
       - chrome

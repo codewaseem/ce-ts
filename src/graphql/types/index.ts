@@ -5,6 +5,7 @@ export interface PageClonePayload {
   status: string;
   userId: string;
   staticURL: string;
+  tempStaticURL: string;
   totalRequests?: number;
   completedRequests?: number;
 }
@@ -22,6 +23,9 @@ export class PageCloneEvent {
 
   @Field(() => String)
   staticURL!: string;
+
+  @Field(() => String, { nullable: true })
+  tempStaticURL?: string;
 
   @Field(() => Date)
   time!: Date;
