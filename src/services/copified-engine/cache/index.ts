@@ -7,7 +7,7 @@ import { join } from "path";
 const BASE_PATH = config.BASE_CLONED_PAGES_PATH;
 
 const redisClient = redis.createClient({
-  host: "localhost",
+  host: config.REDIS_HOST,
   port: 6379,
 });
 
@@ -64,7 +64,9 @@ export async function removeFromCache({
   const filename = await get(key);
 
   if (filename && filename.length) {
-    await fse.unlink(getSavePath(filename));
+    const path = getSavePath(filename);
+    const pathExists = await fse.pathExists(path);
+    pathExists && (await fse.unlink(path));
   }
 
   await set(key, "");
