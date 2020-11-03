@@ -40,8 +40,11 @@ const ScrollPlugin: CEPlugin = {
 
         window.scrollTo(0, 0);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 3 * 1000));
       });
+
+      // helps to close pop-ups in some websites
+      await page.keyboard.press("Escape");
     },
   },
 };

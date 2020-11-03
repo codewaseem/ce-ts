@@ -45,7 +45,7 @@ export async function clonePageAPI({
     CEEventPlugin,
     InjectToDomPlugin,
     WaitForPlugin({
-      waitUntil: "networkidle2",
+      waitUntil: "networkidle0",
       ...navigationOptions,
     }),
     ScrollPlugin,

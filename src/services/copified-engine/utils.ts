@@ -34,8 +34,8 @@ export async function captureCurrentDOM(page: Page): Promise<JSDOM> {
 
     return htmlDoc;
   } catch (e) {
-    logger.error(e);
-    return new JSDOM();
+    logger.error(`Page.captureSnapshot failed. Returning plain content`);
+    return new JSDOM(await page.content());
   }
 }
 

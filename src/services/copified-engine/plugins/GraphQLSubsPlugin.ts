@@ -4,6 +4,13 @@ import logger from "../../../utils/logger";
 import { saveToCache } from "../cache";
 import { BaseCEPlugin, CEPlugin } from "../types";
 import { captureCurrentDOM } from "../utils";
+import fse from "fs-extra";
+import { join } from "path";
+import { Page } from "puppeteer-extra/dist/puppeteer";
+
+const injectHTML = fse
+  .readFileSync(join(__dirname, "../../../assets", "inject.html"))
+  .toString();
 
 const GraphQLSubsPlugin = (
   publish: Publisher<PageClonePayload>,
@@ -13,6 +20,7 @@ const GraphQLSubsPlugin = (
   let completedRequests = 0;
   let stopPushing = false;
   let tempStaticURL = "";
+  let inProcess = false;
   const status = "loading";
 
   const publishState = () =>
@@ -40,33 +48,45 @@ const GraphQLSubsPlugin = (
           completedRequests++;
         });
 
+        setTimeout(() => {
+          captureDOMHelper(page, basePayload)
+            .then((tempPath) => {
+              logger.info(tempPath);
+              tempStaticURL = tempPath;
+              inProcess = false;
+              publishState();
+            })
+            .catch((e) => {
+              inProcess = false;
+              logger.error("TEMP FILE NOT SAVED");
+              logger.error(e);
+            });
+        }, 5 * 1000);
+
         const pushStateTimer = setInterval(() => {
           if (stopPushing && page.isClosed()) {
             clearInterval(pushStateTimer);
           } else {
             publishState();
           }
-        }, 3 * 1000);
+        }, 2 * 1000);
 
         const timer = setInterval(async function cb() {
           if (stopPushing || page.isClosed()) {
             clearInterval(timer);
           } else {
-            captureCurrentDOM(page)
-              .then((dom) => dom.serialize())
-              .then((content) => {
-                return saveToCache({
-                  userId: basePayload.userId || "temp",
-                  url: basePayload.url || "",
-                  content,
-                });
-              })
+            if (inProcess) return;
+
+            inProcess = true;
+            captureDOMHelper(page, basePayload)
               .then((tempPath) => {
                 logger.info(tempPath);
                 tempStaticURL = tempPath;
+                inProcess = false;
                 publishState();
               })
               .catch((e) => {
+                inProcess = false;
                 logger.error("TEMP FILE NOT SAVED");
                 logger.error(e);
               });
@@ -81,5 +101,21 @@ const GraphQLSubsPlugin = (
 
   return plugin;
 };
+
+function captureDOMHelper(page: Page, basePayload: Partial<PageClonePayload>) {
+  return captureCurrentDOM(page)
+    .then((dom) => {
+      dom.window.document.head.insertAdjacentHTML("beforeend", injectHTML);
+
+      return dom.serialize();
+    })
+    .then((content) => {
+      return saveToCache({
+        userId: basePayload.userId || "temp",
+        url: basePayload.url || "",
+        content,
+      });
+    });
+}
 
 export default GraphQLSubsPlugin;

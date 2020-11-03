@@ -17,8 +17,12 @@ const PAGE_CLONE_TOPIC = "PAGE_CLONE";
 export class CEResolver {
   @Subscription({
     topics: PAGE_CLONE_TOPIC,
+    filter: ({ payload, args }) => payload.url == args.url,
   })
-  pageCloneNotification(@Root() data: PageClonePayload): PageCloneEvent {
+  pageCloneNotification(
+    @Root() data: PageClonePayload,
+    @Arg("url") url: string
+  ): PageCloneEvent {
     return {
       ...data,
       time: new Date(),
