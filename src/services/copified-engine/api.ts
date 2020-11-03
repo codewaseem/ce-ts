@@ -30,7 +30,7 @@ export async function clonePageAPI({
   url,
   userId,
   plugins: otherPlugins = [],
-  useProxy,
+  useProxy = true,
   pageViewport,
   userAgent,
   navigationOptions,
