@@ -1,11 +1,11 @@
-import { resolve } from "path";
+import { Page } from "puppeteer-extra/dist/puppeteer";
 import { BaseCEPlugin, CEPlugin } from "../types";
 
 const ScrollPlugin: CEPlugin = {
   ...BaseCEPlugin,
   methods: {
     ...BaseCEPlugin.methods,
-    async runPageScript(page): Promise<void> {
+    async runPageScript(page: Page): Promise<void> {
       await page.evaluate(async () => {
         const scrollDistance = 200;
         const scrollTimeout = 250;

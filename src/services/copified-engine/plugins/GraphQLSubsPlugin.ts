@@ -48,21 +48,6 @@ const GraphQLSubsPlugin = (
           completedRequests++;
         });
 
-        setTimeout(() => {
-          captureDOMHelper(page, basePayload)
-            .then((tempPath) => {
-              logger.info(tempPath);
-              tempStaticURL = tempPath;
-              inProcess = false;
-              publishState();
-            })
-            .catch((e) => {
-              inProcess = false;
-              logger.error("TEMP FILE NOT SAVED");
-              logger.error(e);
-            });
-        }, 5 * 1000);
-
         const pushStateTimer = setInterval(() => {
           if (stopPushing && page.isClosed()) {
             clearInterval(pushStateTimer);
