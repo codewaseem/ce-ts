@@ -8,9 +8,7 @@ services:
   chrome:
     image: "browserless/chrome"
     environment:
-      - PREBOOT_CHROME=true
-      - KEEP_ALIVE=true
-      - CONNECTION_TIMEOUT=180000
+      - CONNECTION_TIMEOUT=300000
       - MAX_CONCURRENT_SESSIONS=3
       - ENABLE_CORS=true
     ports:
