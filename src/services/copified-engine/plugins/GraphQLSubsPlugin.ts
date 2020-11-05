@@ -12,6 +12,9 @@ const injectHTML = fse
   .readFileSync(join(__dirname, "../../../assets", "inject.html"))
   .toString();
 
+const UPDATE_STATUS_INTERVAL = 3 * 1000; // 3 seconds;
+const SEND_PAGE_CONTENT_INTERVAL = 15 * 1000; // 15 seconds;
+
 const GraphQLSubsPlugin = (
   publish: Publisher<PageClonePayload>,
   basePayload: Partial<PageClonePayload>
@@ -54,7 +57,7 @@ const GraphQLSubsPlugin = (
           } else {
             publishState();
           }
-        }, 2 * 1000);
+        }, UPDATE_STATUS_INTERVAL);
 
         const timer = setInterval(async function cb() {
           if (stopPushing || page.isClosed()) {
@@ -76,7 +79,7 @@ const GraphQLSubsPlugin = (
                 logger.error(e);
               });
           }
-        }, 10 * 1000);
+        }, SEND_PAGE_CONTENT_INTERVAL);
       },
       async afterPageNavigation() {
         stopPushing = true;

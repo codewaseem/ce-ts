@@ -25,18 +25,21 @@ const ScrollPlugin: CEPlugin = {
           }, scrollTimeout);
         });
 
-        await Promise.allSettled(
-          Array.from(document.getElementsByTagName("img"), (image) => {
-            if (image.complete) {
-              return;
-            }
+        await Promise.race([
+          Promise.allSettled(
+            Array.from(document.getElementsByTagName("img"), (image) => {
+              if (image.complete) {
+                return;
+              }
 
-            return new Promise((resolve, reject) => {
-              image.addEventListener("load", resolve);
-              image.addEventListener("error", reject);
-            });
-          })
-        );
+              return new Promise((resolve, reject) => {
+                image.addEventListener("load", resolve);
+                image.addEventListener("error", reject);
+              });
+            })
+          ),
+          new Promise((resolve) => setTimeout(resolve, 30 * 1000)),
+        ]);
 
         window.scrollTo(0, 0);
 

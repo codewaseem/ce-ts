@@ -19,6 +19,8 @@ interface CopifiedEngineProps {
   plugins?: CEPlugin[];
 }
 
+const MAX_NAVIGATION_TIMEOUT = 60 * 1000; // 60 seconds
+
 export default class CopifiedEngine {
   private plugins: CEPlugin[];
   private url: string;
@@ -96,7 +98,10 @@ export default class CopifiedEngine {
       ]);
     }
 
-    await this.page.goto(this.url, navigationOptions);
+    await Promise.race([
+      this.page.goto(this.url, navigationOptions),
+      new Promise((resolve) => setTimeout(resolve, MAX_NAVIGATION_TIMEOUT)),
+    ]);
 
     for (const plugin of this.plugins) {
       await plugin.events.afterPageNavigation(this.page);
