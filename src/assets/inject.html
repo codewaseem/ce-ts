@@ -102,7 +102,7 @@
     e.preventDefault();
     const xPath = getPathTo(e.target);
     const outerHTML = e.target.outerHTML;
-    window.top.postMessage({ xPath, outerHTML }, "*");
+    window.top.postMessage({ result: "click", xPath, outerHTML }, "*");
   }
 
   function addClickHandler() {
