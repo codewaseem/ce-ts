@@ -5,7 +5,8 @@ services:
     ports:
       - 6379:6379
     command: redis-server
-    working_dir: /data
+    volumes:
+      - ./data:/data
   chrome:
     image: "browserless/chrome"
     environment:
