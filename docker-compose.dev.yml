@@ -1,6 +1,7 @@
 version: "3.8"
 services:
   redis:
+    restart: always
     image: "redis:alpine"
     ports:
       - 6379:6379
@@ -8,6 +9,7 @@ services:
     volumes:
       - ./data:/data
   chrome:
+    restart: always
     image: "browserless/chrome"
     environment:
       - CONNECTION_TIMEOUT=300000
@@ -16,6 +18,7 @@ services:
     ports:
       - 3000:3000
   app:
+    restart: always
     build:
       context: .
     ports:
